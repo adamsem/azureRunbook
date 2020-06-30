@@ -313,7 +313,7 @@ function PerformActionOnSequencedTaggedVMRGs($Sequences, [string]$Action, $TagNa
             foreach($vmObj in $ActualAzureVMList)
             {
                 $ActualVMListOutput = $ActualVMListOutput + $vmObj.Name + " "
-                Write-Output "Executing runbook ScheduledStartStop_Child to perform the $($Action) action on VM: $($vmobj.Name)"
+                Write-Output "Executing job to perform the $($Action) action on VM: $($vmobj.Name)"
                 $params = @{"VMName"="$($vmObj.Name)";"Action"=$Action;"ResourceGroupName"="$($vmObj.ResourceGroupName)"}
 
                 #Retry logic for Start-AzAutomationRunbook cmdlet
@@ -328,9 +328,9 @@ function PerformActionOnSequencedTaggedVMRGs($Sequences, [string]$Action, $TagNa
                 {
                     try
                     {
-                        $runbook = Start-AzAutomationRunbook -AutomationAccountName $automationAccountName -Name 'ScheduledStartStop_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+                        Stop-AzVM -Force -ResourceGroupName $rg -Name $AzureVM
 
-                        Write-Output "Triggered the child runbook for ARM VM : $($vmObj.Name)"
+                        Write-Output "Triggered the job for ARM VM : $($vmObj.Name)"
 
                         $RetryFlag = $false
                     }
