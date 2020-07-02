@@ -171,6 +171,28 @@ else
     Write-Output "Starting VMs";
     foreach ($AzureVM in $AzureVMsToHandle)
     {
-        Start-AzVM -ResourceGroupName $rg -Name $AzureVM
+        $CheckVMStatus = CheckVMState -VMObject $AzureVM -Action $Action
+        if ( $CheckVMStatus -eq $false )
+        {
+            Start-AzVM -Force -ResourceGroupName $rg -Name $AzureVM
+        }
+        While($CheckVMStatus -eq $false)
+        {
+            Write-Output "Checking the VM Status in 10 seconds..."
+            Start-Sleep -Seconds 10
+            $SleepCount+=10
+            if($SleepCount -gt $maxWaitTimeForVMRetryInSeconds -and $ContinueOnError -eq $false)
+            {
+                Write-Output "Unable to $($Action) the VM $($AzureVM). ContinueOnError is set to False, hence terminating the sequenced $($Action)..."
+                Write-Output "Completed the sequenced $($Action)..."
+                exit
+            }
+            elseif($SleepCount -gt $maxWaitTimeForVMRetryInSeconds -and $ContinueOnError -eq $true)
+            {
+                Write-Output "Unable to $($Action) the VM $($AzureVM). ContinueOnError is set to True, hence moving to the next resource..."
+                break
+            }
+            $CheckVMStatus = CheckVMState -VMObject $AzureVM -Action $Action
+        }
     }
 }
